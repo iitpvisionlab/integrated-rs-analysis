@@ -6,11 +6,11 @@ from math import factorial
 # regularizing coefficient
 
 
-class _RPC:
+class RPC:
     def __init__(self, degree: int, reg_coef: float = 0.0) -> None:
         self.degree = degree
         self.reg_coef = reg_coef
-        self.poly = PolynomialFeatures(self.degree)
+        self.poly = PolynomialFeatures(self.degree, include_bias=False)
         self.weight = None
 
     def __str__(self) -> str:
@@ -47,8 +47,8 @@ class _RPC:
             Xp[:, count:end_count] = Xp[:, count:end_count] ** (1 / curr_k)
             count = end_count
         return Xp
-    
-    def _get_degree_count(self, k:int):
+
+    def _get_degree_count(self, k: int):
         """
         How much number n features can produce elements with k degree
         Example: 1, a, b, a^2, ab, b^2
@@ -111,10 +111,8 @@ class _RPC:
     def load_model() -> "RPC":
         return RPC()
 
-    
 
-
-
+# Deprecated
 
 def calc_lin_coefs_reg(vals_mat_s, vals_mat_t,reg_coef=0):
     n_s = vals_mat_s.shape[1]
@@ -181,7 +179,6 @@ def makeRootFeatures(Xp, n, k, bias):
 
 
 def get_right_indices(power_arr, n, bias=False):
-    print(power_arr)
     if bias:
         N = n + 1
     else:
@@ -209,8 +206,9 @@ class RPCmodel:
     def fit(self, X, Y):
         # create polynomial of self.degree
         n = len(X[0])
-        print(X.shape)
+        print()
         Xp = self.poly.fit_transform(X)
+        print(Xp.shape)
         # transform to root polynomial
         Xrp = makeRootFeatures(Xp, n, self.degree, bias=self.bias)
         # getting indices that should be excluded ex. (a, sqrt(a^2)), currently 'just works' method
@@ -237,7 +235,7 @@ class RPCmodel:
         return Y
 
 
-class RPC:
+class RPC_dep:
     def __init__(self, degree, reg_coef=0.0, bias=False):
         self.degree = degree
         self.bias = bias
@@ -255,6 +253,7 @@ class RPC:
     def fit(self, df_x, df_y):
         self.columns = df_y.columns
         X = df_x.values
+        print(X.shape)
         Y = df_y.values
         self.model.fit(X, Y)
 
