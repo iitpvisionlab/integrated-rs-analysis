@@ -36,18 +36,28 @@ class AffineModel:
         return np.sum(2 * (b * c + d - a), axis=0) + r * self._dn(d, l)
 
     def fit(self, a, b, r=0.0025, l=2.0, t=1e-14, lr=0.0001, n=1000000):
-        """Calculate coefficients for affine model with regularization
+        """
+        Calculate coefficients for affine model with regularization.
 
-            Args:
-                a (array) : array of clues with normal illumination
-                b (array) : array of clues with difficult illumination
-                r (float) : scale regularization coefficient
-                l (float) : norm of regularization
-                t (float) : marginal increase in regularization accuracy at adjacent stages
-                n (int) : threshold for regularization steps
-                
-            Returns:
-                float, float: return k_1, k_2 coefficeint
+        Returns
+        -------
+        output : float, float
+            Return k_1, k_2 coefficeint
+
+        Parameters
+        ----------
+        a : array
+            Array of clues with normal illumination
+        b : array
+            Array of clues with difficult illumination
+        r : float
+            Scale regularization coefficient
+        l : float  
+            Norm of regularization
+        t : float  
+            Marginal increase in regularization accuracy at adjacent stages
+        n : int
+            Threshold for regularization steps
         """
         co = np.maximum(
             np.mean(a, axis=0) / (np.mean(b, axis=0) + 0.0001), 0.0001
@@ -71,39 +81,55 @@ class AffineModel:
         return co, do
 
     def predict(self, x):
-        """Calculate the irradiance spectrum under target conditions
+        """
+        Calculate the irradiance spectrum under target conditions
 
-            Args:
-                x (array) : the irradiance spectrum under original shooting conditions
+        Returns
+        -------
+        output : array
+            The irradiance spectrum under target conditions
 
-            Returns:
-                array : the irradiance spectrum under target conditions
+        Parameters
+        ----------
+        x : array
+            The irradiance spectrum under original shooting conditions
         """
         return self.c * x + self.d
 
 
 
 def rad(path, gain):
-    """Read multispectral image with gain correction
+    """
+    Read multispectral image with gain correction
 
-    Args:
-        path (str) : path to image file
-        gain (array) : array of gain coefficients
-        
-    Returns:
-        numpy ndarray: multispectral image with gain correction
+    Returns
+    -------
+    output : numpy ndarray
+        Multispectral image with gain correction
+
+    Parameters
+    ----------
+    path : str
+        Path to image file
+    gain : array
+        Array of gain coefficients
     """
     img = rasterio.open(path).read()
     return np.mean(img, axis=(1,2))/gain
 
 def read_gain(gain_path):
-    """Read *.gain file into array
+    """
+    Read *.gain file into array
 
-    Args:
-        gain_path (str) : path to *.gain file
-        
-    Returns:
-        array : array of gain coefficients
+    Returns
+    -------
+    output : array
+        Array of gain coefficients
+
+    Parameters
+    ----------
+    gain_path : str
+        Path to *.gain file
     """
     
     with open(gain_path, 'r') as f:
