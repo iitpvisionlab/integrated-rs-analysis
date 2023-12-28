@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import PolynomialFeatures
 from math import factorial
+import pickle
 
 # regularizing coefficient
 
@@ -105,11 +106,13 @@ class RPC:
         return Y
 
     def save_model(self, path) -> None:
-        ...
+        with open(path, "wb") as file:
+            pickle.dump(self, file)
 
     @staticmethod
-    def load_model() -> "RPC":
-        return RPC()
+    def load_model(path) -> "RPC":
+        with open(path, "rb") as file:
+            return pickle.load(file)
 
 
 # Deprecated
