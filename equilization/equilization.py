@@ -1,145 +1,135 @@
 import numpy as np
-import os
-import os.path as osp
-import matplotlib.pyplot as plt
 import rasterio
-from sklearn.metrics import mean_squared_error
-from sklearn import linear_model
-
-
-def fn(c, d, r, l):
-    """Calculate metric of smoothness of a function
-
-    Args:
-        c (array) : 1st coefficient at current step
-        d (array) : 2st coefficient at current step
-        r (float) : scale coefficient
-        l (float) : norm type
-        
-    Returns:
-        float : metric of smoothness of a function
-    """
-    filter_c = np.array([c[i] - c[i-1] for i in range(1, len(c))])
-    filter_d = np.array([d[i] - d[i-1] for i in range(1, len(d))])
-    ec = np.abs(filter_c)**l
-    ed = np.abs(filter_d)**l
-    e = r * (np.sum(ec) + np.sum(ed))
-    return e
-
-
-def dn(x, l):
-    """Calculate the term of regularization coefficient
-
-    Args:
-        x (array) : coefficient in need of regularization
-        l (float) : norm of regularization
-        
-    Returns:
-        numpy ndarray: term of regularization coefficient
-    """
-    dx = np.zeros((x.shape[0]+1))
-    dx[0] = x[0]
-    dx[1:] = x[:]
-    dx =  np.array([dx[i] - dx[i-1] for i in range(1, len(dx))])
-    s = -np.sign(dx)
-    grx = l * s * np.abs(dx) ** (l - 1)
-    dgrx = np.zeros((grx.shape[0]+1))
-    dgrx[-1] = grx[-1]
-    dgrx[:-1] = grx[:]
-    return np.array([dgrx[i] - dgrx[i+1] for i in range(0, len(dgrx)-1)])
 
 
 
-def hcn(a, b, c, d, r, l):
-     """Calculate gradient for 1st affine model coefficient
+class AffineModel:
+    c = 0
+    d = 0
 
-    Args:
-        a (array) : array of clues with normal illumination
-        b (array) : array of clues with difficult illumination
-        c (array) : 1st coefficient at current step
-        d (array) : 2st coefficient at current step
-        r (float) : scale regularization coefficient
-        l (float) : norm of regularization
-        
-    Returns:
-        numpy ndarray: gradient for 1st affine model coefficient
-    """
-     return np.sum(2*(b*c + d - a)*b, axis=0) + r*dn(c, l)
+    def _error_func(self, c, d, r, l):
+        filter_c = np.array([c[i] - c[i - 1] for i in range(1, len(c))])
+        filter_d = np.array([d[i] - d[i - 1] for i in range(1, len(d))])
+        ec = np.abs(filter_c) ** l
+        ed = np.abs(filter_d) ** l
+        e = r * (np.sum(ec) + np.sum(ed))
+        return e
 
+    def _dn(self, x, l):
+        dx = np.zeros((x.shape[0] + 1))
+        dx[0] = x[0]
+        dx[1:] = x[:]
+        dx = np.array([dx[i] - dx[i - 1] for i in range(1, len(dx))])
+        s = -np.sign(dx)
+        grx = l * s * np.abs(dx) ** (l - 1)
+        dgrx = np.zeros((grx.shape[0] + 1))
+        dgrx[-1] = grx[-1]
+        dgrx[:-1] = grx[:]
+        return np.array(
+            [dgrx[i] - dgrx[i + 1] for i in range(0, len(dgrx) - 1)]
+        )
 
-def hdn(a, b, c, d, r, l):
-    """Calculate gradient for 2st affine model coefficient
+    def _hc(self, a, b, c, d, r, l):
+        return np.sum(2 * (b * c + d - a) * b, axis=0) + r * self._dn(c, l)
 
-    Args:
-        a (array) : array of clues with normal illumination
-        b (array) : array of clues with difficult illumination
-        c (array) : 1st coefficient at current step
-        d (array) : 2st coefficient at current step
-        r (float) : scale regularization coefficient
-        l (float) : norm of regularization
-        
-    Returns:
-        numpy ndarray: gradient for 2st affine model coefficient
-    """
-    return np.sum(2*(b*c + d - a), axis=0) + r*dn(d,l)
+    def _hd(self, a, b, c, d, r, l):
+        return np.sum(2 * (b * c + d - a), axis=0) + r * self._dn(d, l)
 
+    def fit(self, a, b, r=0.0025, l=2.0, t=1e-14, lr=0.0001, n=1000000):
+        """
+        Calculate coefficients for affine model with regularization.
 
-def regularization_n(a, b, r, l, t, n):
-    """Calculate coefficients for affine model with regularization
+        Returns
+        -------
+        output : float, float
+            Return k_1, k_2 coefficeint
 
-    Args:
-        a (array) : array of clues with normal illumination
-        b (array) : array of clues with difficult illumination
-        r (float) : scale regularization coefficient
-        l (float) : norm of regularization
-        t (float) : marginal increase in regularization accuracy at adjacent stages
-        n (int) : threshold for regularization steps
-        
-    Returns:
-        numpy ndarray: multispectral image with gain correction
-    """
-    co = np.maximum(np.mean(a, axis=0)/(np.mean(b, axis=0)+0.01), 0.01)
-    do = np.maximum(np.mean(a, axis=0) - co*np.mean(b, axis=0), 0.01)
+        Parameters
+        ----------
+        a : array
+            Array of clues with normal illumination
+        b : array
+            Array of clues with difficult illumination
+        r : float
+            Scale regularization coefficient
+        l : float  
+            Norm of regularization
+        t : float  
+            Marginal increase in regularization accuracy at adjacent stages
+        n : int
+            Threshold for regularization steps
+        """
+        co = np.maximum(
+            np.mean(a, axis=0) / (np.mean(b, axis=0) + 0.0001), 0.0001
+        )
+        do = np.maximum(np.mean(a, axis=0) - co * np.mean(b, axis=0), 0.0001)
 
-    e = fn(co, do, r, l)
-    s = 1.0
-    i = 0
-    lr = 0.00001
-    y_change = e
-    
-    while i <= n and y_change >= t:
-        tmp_c = co - lr * hcn(a, b, co, do, r, l)
-        tmp_d = do - lr * hdn(a, b, co, do, r, l)
-        tmp_y = fn(tmp_c, tmp_d, r, l)
-        y_change = np.abs(tmp_y - e)
-        e = tmp_y
-        co = tmp_c
-        do = tmp_d
-        i += 1
-    return co, do
+        e = self._error_func(co, do, r, l)
+        y_change = e
+        i = 0
+        while i <= n and y_change >= t:
+            tmp_c = co - lr * self._hc(a, b, co, do, r, l)
+            tmp_d = do - lr * self._hd(a, b, co, do, r, l)
+            tmp_y = self._error_func(tmp_c, tmp_d, r, l)
+            y_change = np.abs(tmp_y - e)
+            e = tmp_y
+            co = tmp_c
+            do = tmp_d
+            i += 1
+        self.c = co
+        self.d = do
+        return co, do
+
+    def predict(self, x):
+        """
+        Calculate the irradiance spectrum under target conditions
+
+        Returns
+        -------
+        output : array
+            The irradiance spectrum under target conditions
+
+        Parameters
+        ----------
+        x : array
+            The irradiance spectrum under original shooting conditions
+        """
+        return self.c * x + self.d
+
 
 
 def rad(path, gain):
-    """Read multispectral image with gain correction
+    """
+    Read multispectral image with gain correction
 
-    Args:
-        path (str) : path to image file
-        gain (array) : array of gain coefficients
-        
-    Returns:
-        numpy ndarray: multispectral image with gain correction
+    Returns
+    -------
+    output : numpy ndarray
+        Multispectral image with gain correction
+
+    Parameters
+    ----------
+    path : str
+        Path to image file
+    gain : array
+        Array of gain coefficients
     """
     img = rasterio.open(path).read()
     return np.mean(img, axis=(1,2))/gain
 
 def read_gain(gain_path):
-    """Read *.gain file into array
+    """
+    Read *.gain file into array
 
-    Args:
-        gain_path (str) : path to *.gain file
-        
-    Returns:
-        array : array of gain coefficients
+    Returns
+    -------
+    output : array
+        Array of gain coefficients
+
+    Parameters
+    ----------
+    gain_path : str
+        Path to *.gain file
     """
     
     with open(gain_path, 'r') as f:
