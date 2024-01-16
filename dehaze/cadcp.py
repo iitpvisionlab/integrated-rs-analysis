@@ -6,15 +6,22 @@ from skimage.metrics import mean_squared_error as mse
 
 
 def get_dark_value(x, y, I, dx=7, dy=7):
-    """Get minimal value through all the channels in considered window for one pixel by its coords
+    """
+    Get minimal value through all the channels in considered window for one pixel by its coords
 
-    Args:
-        x, y (int) : pixel coordinates
-        I (numpy ndarray): image, shape (x_size, y_size, 3)
-        dx, dy (int, optional): window size. Defaults to (7, 7).
+    Returns
+    -------
+    output : int
+        Dark value
 
-    Returns:
-        int: dark value
+    Parameters
+    ----------
+    x, y : int 
+        Pixel coordinates
+    I : numpy ndarray
+        Image, shape (x_size, y_size, 3)
+    dx, dy : int (optional)
+        Window size. Defaults to (7, 7).
     """
     r = np.min(I[x - dx : x + dx + 1, y - dy : y + dy + 1])
     return r
@@ -33,14 +40,20 @@ def get_dark_channel(I, dx, dy):
 
 
 def window_min(I, dx, dy):
-    """Window minimum filter for an image
+    """
+    Window minimum filter for an image
 
-    Args:
-        I (numpy ndarray): image, shape (x_size, y_size)
-        dx, dy (int): window size.
+    Returns
+    -------
+    output : numpy ndarray
+        Image (x_size, y_size)
 
-    Returns:
-        numpy ndarray: image (x_size, y_size)
+    Parameters
+    ----------
+    I : numpy ndarray
+        Image, shape (x_size, y_size)
+    dx, dy : int
+        Window size.
     """
     x_size, y_size = I.shape
     I_dc = np.zeros_like(I)
@@ -53,19 +66,28 @@ def window_min(I, dx, dy):
 
 
 def zhu_depth_estim(I, dx=7, dy=7, r=30, eps=0.01, gf_on=True):
-    """Atmospheric Light Estimation Based Remote Sensing Image Dehazing by
+    """
+    Atmospheric Light Estimation Based Remote Sensing Image Dehazing by
     Z. Zhu et. al.: https://www.mdpi.com/2072-4292/13/13/2432/htm
     Depth map estimation
 
-    Args:
-        I (numpy ndarray): image, shape (x_size, y_size, 3)
-        dx, dy (int, optional): window size. Defaults to (7, 7).
-        r (int, optional): guided filter radius. Defaults to 30.
-        eps (float, optional): reg param for guided filter. Defaults to 0.01.
-        gf_on (bool, optional): apply guided filter or not. Defaults to True.
+    Returns
+    -------
+    output : numpy ndarray
+        Depth map (x_size, y_size)
 
-    Returns:
-        numpy ndarray: depth map (x_size, y_size)
+    Parameters
+    ----------
+    I : numpy ndarray
+        Image, shape (x_size, y_size, 3)
+    dx, dy : int (optional)
+        Window size. Defaults to (7, 7)
+    r : int (optional)
+        Guided filter radius. Defaults to 30.
+    eps : float (optional)
+        Reg param for guided filter. Defaults to 0.01.
+    gf_on : bool (optional)
+        Apply guided filter or not. Defaults to True.
     """
 
     I_hsv = rgb2hsv(I)
@@ -95,21 +117,34 @@ def cadcp(
     gf_on=True,
     a_mean=True,
 ):
-    """Color attenuation prior and Dark Channel Prior dehazing algorithm
+    """
+    Color attenuation prior and Dark Channel Prior dehazing algorithm
 
-    Args:
-        I (numpy ndarray): image, shape (x_size, y_size, 3)
-        dx, dy (int, optional): window size. Defaults to (7, 7).
-        k (float, optional): reg param for dehazed image. Defaults to 0.95.
-        t0 (float, optional): reg param for transmission map. Defaults to 0.1.
-        r (int, optional): guided filter radius. Defaults to 30.
-        eps (float, optional): reg param for guided filter. Defaults to 0.01.
-        d_quantile (float, optional): quantile for veil color estimation. Defaults to 0.999.
-        gf_on (bool, optional): apply guided filter or not. Defaults to True.
-        a_mean (bool, optional): average to estimate veil color or not . Defaults to True.
+    Returns
+    -------
+    output : numpy ndarray
+        Dehazed image (x_size, y_size)
 
-    Returns:
-        numpy ndarray: dehazed image (x_size, y_size)
+    Parameters
+    ----------
+    I : numpy ndarray
+        Image, shape (x_size, y_size, 3)
+    dx, dy : int (optional)
+        Window size. Defaults to (7, 7)
+    k : float (optional)
+        Reg param for dehazed image. Defaults to 0.95.
+    t0 : float (optional)
+        Reg param for transmission map. Defaults to 0.1.
+    r : int (optional)
+        Guided filter radius. Defaults to 30.
+    eps : float (optional)
+        Reg param for guided filter. Defaults to 0.01.
+    d_quantile : float (optional)
+        Quantile for veil color estimation. Defaults to 0.999.
+    gf_on : bool (optional)
+        Apply guided filter or not. Defaults to True.
+    a_mean : bool (optional)
+        Average to estimate veil color or not . Defaults to True.
     """
 
     d = zhu_depth_estim(I, dx, dy, r, eps, gf_on)
@@ -137,15 +172,22 @@ def cadcp(
 
 
 def calculate_metrics(orig, img, metrics={"MSE" : mse}):
-    """Quality metrics calculator
+    """
+    Quality metrics calculator
 
-    Args:
-        orig (numpy ndarray): clear image
-        img (numpy ndarray): dehazed image
-        metrics (dict, optional): metrics functions. Defaults to MSE.
+    Returns
+    -------
+    output : list
+        Metrics values
 
-    Returns:
-        list: metrics values
+    Parameters
+    ----------
+    orig : numpy ndarray
+        Clear image
+    img : numpy ndarray
+        Dehazed image
+    metrics : dict (optional)
+        Metrics functions. Defaults to MSE.
     """
     m_vals = []
 

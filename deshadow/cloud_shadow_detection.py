@@ -74,7 +74,7 @@ def match_shadow_cloud(
 
 
 def get_masks(rgbn: np.ndarray, window_size: int = 500,
-              padding_size: int = 300) -> tuple(np.ndarray, np.ndarray):
+              padding_size: int = 300) -> tuple((np.ndarray, np.ndarray)):
     """
     Function for calculating cloud and shadow masks from red, green, blue and
     nir channels. Details of the method are presented in [1].
