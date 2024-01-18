@@ -2,7 +2,25 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 
 
-def ndvi_vis(image, cloud_mask):
+def ndvi_vis(
+    image : np.ndarray,
+    cloud_mask : np.ndarray
+    ) -> np.ndarray:
+    """
+    Visualize ndvi index with segmented colormap
+
+    Parameters
+    ----------
+    image : np.ndarray
+        Ndvi image index 
+    cloud_mask : np.ndarray
+        Mask of cloud in uint8.
+
+    Returns
+    -------
+    output : np.ndarray
+        Colormap of segmented ndvi image index
+    """
     palettes = {
         "RedGreen": [
             "#C03333",

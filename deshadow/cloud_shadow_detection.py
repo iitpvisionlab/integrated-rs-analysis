@@ -20,7 +20,7 @@ def match_shadow_cloud(
 
     Parameters
     ----------
-    shadow : (H, W) nd.ndarray
+    shadow : (H, W) np.ndarray
         Binary mask of shadow.
     cloud : (H, W) np.ndarray
         Binary mask of cloud.

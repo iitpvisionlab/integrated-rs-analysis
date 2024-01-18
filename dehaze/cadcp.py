@@ -5,7 +5,13 @@ from scipy.ndimage import gaussian_filter
 from skimage.metrics import mean_squared_error as mse
 
 
-def get_dark_value(x, y, I, dx=7, dy=7):
+def get_dark_value(
+    x : int,
+    y : int,
+    I : np.ndarray, 
+    dx : int = 7,
+    dy : int = 7
+    ) -> int:
     """
     Get minimal value through all the channels in considered window for one pixel by its coords
 
@@ -27,7 +33,26 @@ def get_dark_value(x, y, I, dx=7, dy=7):
     return r
 
 
-def get_dark_channel(I, dx, dy):
+def get_dark_channel(
+    I : np.ndarray, 
+    dx : int ,
+    dy : int, 
+    ) -> np.ndarray:
+    """
+    Return dark channnel of image
+
+    Returns
+    -------
+    output : numpy ndarray
+        Image (x_size, y_size)
+
+    Parameters
+    ----------
+    I : numpy ndarray
+        Image, shape (x_size, y_size)
+    dx, dy : int
+        Window size.
+    """
     x_size, y_size = I.shape[:2]
     I_dc = np.zeros_like(I)
     pad_I = np.pad(I, ((dx, dx), (dy, dy), (0, 0)), mode="reflect")
@@ -39,7 +64,11 @@ def get_dark_channel(I, dx, dy):
     return I_dc[..., 0]
 
 
-def window_min(I, dx, dy):
+def window_min(
+    I : np.ndarray, 
+    dx : int ,
+    dy : int, 
+    ) -> np.ndarray:
     """
     Window minimum filter for an image
 
@@ -65,7 +94,14 @@ def window_min(I, dx, dy):
     return I_dc
 
 
-def zhu_depth_estim(I, dx=7, dy=7, r=30, eps=0.01, gf_on=True):
+def zhu_depth_estim(
+    I : np.ndarray,
+    dx : int = 7,
+    dy : int = 7,
+    r : int = 30,
+    eps : float = 0.01,
+    gf_on : bool = True
+    ) -> np.ndarray:
     """
     Atmospheric Light Estimation Based Remote Sensing Image Dehazing by
     Z. Zhu et. al.: https://www.mdpi.com/2072-4292/13/13/2432/htm
@@ -106,17 +142,16 @@ def zhu_depth_estim(I, dx=7, dy=7, r=30, eps=0.01, gf_on=True):
     return d
 
 def cadcp(
-    I,
-    dx=7,
-    dy=7,
-    k=0.95,
-    t0=0.01,
-    r=30,
-    eps=0.01,
-    d_quantile=0.999,
-    gf_on=True,
-    a_mean=True,
-):
+    I : np.ndarray,
+    dx : int = 7,
+    dy : int = 7,
+    k : float = 0.95,
+    r : int = 30,
+    eps : float = 0.01,
+    d_quantile : float = 0.999,
+    gf_on : bool = True,
+    a_mean : bool = True
+) -> np.ndarray:
     """
     Color attenuation prior and Dark Channel Prior dehazing algorithm
 
@@ -133,8 +168,6 @@ def cadcp(
         Window size. Defaults to (7, 7)
     k : float (optional)
         Reg param for dehazed image. Defaults to 0.95.
-    t0 : float (optional)
-        Reg param for transmission map. Defaults to 0.1.
     r : int (optional)
         Guided filter radius. Defaults to 30.
     eps : float (optional)
@@ -171,7 +204,11 @@ def cadcp(
 
 
 
-def calculate_metrics(orig, img, metrics={"MSE" : mse}):
+def calculate_metrics(
+    orig : np.ndarray,
+    img : np.ndarray,
+    metrics : dict = {"MSE" : mse}
+    ) -> list:
     """
     Quality metrics calculator
 

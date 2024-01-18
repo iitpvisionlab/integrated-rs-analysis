@@ -35,7 +35,16 @@ class AffineModel:
     def _hd(self, a, b, c, d, r, l):
         return np.sum(2 * (b * c + d - a), axis=0) + r * self._dn(d, l)
 
-    def fit(self, a, b, r=0.0025, l=2.0, t=1e-14, lr=0.0001, n=1000000):
+    def fit(
+        self,
+        a : np.ndarray,
+        b : np.ndarray,
+        r : float = 0.0025,
+        l : float = 2.0,
+        t : float = 1e-14,
+        lr : float = 0.0001,
+        n : int = 1000000
+        ) -> (float, float):
         """
         Calculate coefficients for affine model with regularization.
 
@@ -46,9 +55,9 @@ class AffineModel:
 
         Parameters
         ----------
-        a : array
+        a : numpy ndarray
             Array of clues with normal illumination
-        b : array
+        b : numpy ndarray
             Array of clues with difficult illumination
         r : float
             Scale regularization coefficient
@@ -56,6 +65,8 @@ class AffineModel:
             Norm of regularization
         t : float  
             Marginal increase in regularization accuracy at adjacent stages
+        lr : float  
+            Learning rate
         n : int
             Threshold for regularization steps
         """
@@ -80,25 +91,31 @@ class AffineModel:
         self.d = do
         return co, do
 
-    def predict(self, x):
+    def predict(
+        self,
+        x : np.ndarray
+        ) -> np.ndarray:
         """
         Calculate the irradiance spectrum under target conditions
 
         Returns
         -------
-        output : array
+        output : numpy ndarray
             The irradiance spectrum under target conditions
 
         Parameters
         ----------
-        x : array
+        x : numpy ndarray
             The irradiance spectrum under original shooting conditions
         """
         return self.c * x + self.d
 
 
 
-def rad(path, gain):
+def rad(
+    path : str,
+    gain : np.ndarray
+    ) -> np.ndarray:
     """
     Read multispectral image with gain correction
 
@@ -111,19 +128,21 @@ def rad(path, gain):
     ----------
     path : str
         Path to image file
-    gain : array
+    gain : numpy ndarray
         Array of gain coefficients
     """
     img = rasterio.open(path).read()
     return np.mean(img, axis=(1,2))/gain
 
-def read_gain(gain_path):
+def read_gain(
+    gain_path : str
+    ) -> np.ndarray:
     """
     Read *.gain file into array
 
     Returns
     -------
-    output : array
+    output : numpy ndarray
         Array of gain coefficients
 
     Parameters
